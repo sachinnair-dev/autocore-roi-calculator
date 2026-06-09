@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUTOCORE ROI Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100%;
+    background: #eef3f9;
+    font-family: 'DM Sans', sans-serif;
+    color: #0d2d52;
+  }
+
+  /* Gill Sans stack — relies on system font, widely available on Mac/Windows */
+  .font-heading {
+    font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+  }
+
+  .page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: #0d2d52;
+    padding: 14px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topbar-title {
+    font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.01em;
+  }
+  .topbar-title span { color: #4db3ff; }
+  .topbar-sub {
+    font-size: 12px;
+    color: #6a97c0;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 0;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 40px;
+    gap: 32px;
+  }
+
+  /* ── INPUTS ── */
+  .inputs-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid #dce8f5;
+    height: fit-content;
+    position: sticky;
+    top: 24px;
+  }
+
+  .card-heading {
+    font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #9ab4cc;
+    margin-bottom: 20px;
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: #4a6b8a;
+    margin-bottom: 6px;
+    font-weight: 400;
+  }
+
+  .field .val-display {
+    font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: #0d2d52;
+    margin-top: 4px;
+    display: block;
+  }
+
+  input[type=range] {
+    width: 100%;
+    height: 4px;
+    appearance: none;
+    background: #d0e4f7;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    margin: 8px 0 4px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #1a7fd4;
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 1.5px #1a7fd4;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #1a7fd4;
+    cursor: pointer;
+    border: 3px solid #fff;
+  }
+
+  select {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #0d2d52;
+    background: #f4f8fd;
+    border: 1px solid #d0e4f7;
+    border-radius: 8px;
+    padding: 9px 12px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a6b8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  select:focus { border-color: #1a7fd4; background-color: #fff; }
+
+  .currency-toggle { display: flex; gap: 6px; margin-top: 2px; }
+  .currency-toggle button {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px;
+    background: #f4f8fd;
+    border: 1px solid #d0e4f7;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #6a8caa;
+    transition: all 0.15s;
+  }
+  .currency-toggle button.active {
+    background: #0d2d52;
+    border-color: #0d2d52;
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .field-divider {
+    border: none;
+    border-top: 1px solid #eef3f9;
+    margin: 20px 0;
+  }
+
+  /* ── RESULTS ── */
+  .results-col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* Summary metrics */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .metric-card {
+    background: #fff;
+    border: 1px solid #dce8f5;
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .metric-card.primary {
+    background: #0d2d52;
+    border-color: #0d2d52;
+  }
+
+  .metric-card .m-icon {
+    font-size: 18px;
+    margin-bottom: 10px;
+    display: block;
+    color: #9ab4cc;
+  }
+  .metric-card.primary .m-icon { color: #4a7aaa; }
+
+  .metric-card .m-value {
+    font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #0d2d52;
+    line-height: 1;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .metric-card.primary .m-value { color: #fff; }
+
+  .metric-card .m-label {
+    font-size: 11px;
+    color: #6a8caa;
+    line-height: 1.4;
+  }
+  .metric-card.primary .m-label { color: #5a87b8; }
+
+  /* Pillar cards */
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .pillar {
+    background: #fff;
+    border: 1px solid #dce8f5;
+    border-radius: 16px;
+    padding: 22px;
+    border-top: 4px solid;
+  }
+  .pillar.speed  { border-top-color: #1a7fd4; }
+  .pillar.quality { border-top-color: #0f6e56; }
+  .pillar.scale  { border-top-color: #f5a623; }
+  .pillar.cost   { border-top-color: #534ab7; }
+
+  .pillar .p-name {
+    font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .pillar.speed .p-name  { color: #1a7fd4; }
+  .pillar.quality .p-name { color: #0f6e56; }
+  .pillar.scale .p-name  { color: #c27a00; }
+  .pillar.cost .p-name   { color: #534ab7; }
+
+  .pillar .p-stat {
+    font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: #0d2d52;
+    line-height: 1;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .pillar .p-desc {
+    font-size: 11px;
+    color: #6a8caa;
+    margin-bottom: 14px;
+    line-height: 1.4;
+  }
+
+  .pillar-points {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid #eef3f9;
+    padding-top: 12px;
+  }
+  .pillar-points li {
+    font-size: 11px;
+    color: #4a6b8a;
+    padding-left: 12px;
+    position: relative;
+    line-height: 1.4;
+  }
+  .pillar-points li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: #c0d4e8;
+  }
+
+  /* Footer */
+  .footer {
+    background: #0d2d52;
+    padding: 12px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .footer span {
+    font-size: 10px;
+    color: #4a6b8a;
+  }
+  .footer .disclaimer { font-style: italic; max-width: 600px; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 900px) {
+    .topbar { padding: 14px 20px; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .topbar-title { font-size: 16px; }
+
+    .main {
+      grid-template-columns: 1fr;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .inputs-card { position: static; }
+
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .pillars-grid { grid-template-columns: 1fr 1fr; }
+
+    .metric-card .m-value { font-size: 22px; }
+    .pillar .p-stat { font-size: 26px; }
+
+    .footer { padding: 12px 20px; flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (max-width: 520px) {
+    .metrics-grid { grid-template-columns: 1fr; }
+    .pillars-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">AUTOCORE <span>ROI</span> Calculator</div>
+    </div>
+    <div class="topbar-sub">Adjust your team details — see your estimated annual impact</div>
+  </div>
+
+  <div class="main">
+
+    <!-- INPUTS -->
+    <div class="inputs-card">
+      <div class="card-heading">Your current setup</div>
+
+      <div class="field">
+        <label>QA team size</label>
+        <input type="range" id="teamSize" min="2" max="100" value="15" step="1">
+        <span class="val-display"><span id="teamSizeVal">15</span> engineers</span>
+      </div>
+
+      <div class="field">
+        <label>Time spent on regression &amp; maintenance</label>
+        <input type="range" id="maintPct" min="20" max="90" value="60" step="5">
+        <span class="val-display"><span id="maintPctVal">60</span>% of team time</span>
+      </div>
+
+      <div class="field">
+        <label>Current test cycle duration</label>
+        <input type="range" id="cycleDays" min="1" max="14" value="5" step="1">
+        <span class="val-display"><span id="cycleDaysVal">5</span> days per cycle</span>
+      </div>
+
+      <hr class="field-divider">
+
+      <div class="field">
+        <label>Release frequency</label>
+        <select id="releaseFreq">
+          <option value="52">Daily (52× per year)</option>
+          <option value="26">Weekly (26× per year)</option>
+          <option value="12" selected>Bi-weekly (12× per year)</option>
+          <option value="4">Monthly (4× per year)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Average annual QA salary</label>
+        <select id="salaryBand">
+          <option value="800000">₹ 8 Lakhs / year</option>
+          <option value="1200000" selected>₹ 12 Lakhs / year</option>
+          <option value="1800000">₹ 18 Lakhs / year</option>
+          <option value="usd60">$ 60,000 / year</option>
+          <option value="usd90">$ 90,000 / year</option>
+          <option value="usd120">$ 120,000 / year</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Display currency</label>
+        <div class="currency-toggle">
+          <button id="btnINR" class="active" onclick="setCurrency('INR')">₹ INR</button>
+          <button id="btnUSD" onclick="setCurrency('USD')">$ USD</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-col">
+
+      <div class="metrics-grid">
+        <div class="metric-card primary">
+          <span class="m-icon">💰</span>
+          <span class="m-value" id="costSaved">—</span>
+          <div class="m-label">Annual cost saved<br>net of platform investment</div>
+        </div>
+        <div class="metric-card">
+          <span class="m-icon">⏱</span>
+          <span class="m-value" id="hoursReclaimed">—</span>
+          <div class="m-label">Hours reclaimed per year<br>redirected to high-value work</div>
+        </div>
+        <div class="metric-card">
+          <span class="m-icon">🚀</span>
+          <span class="m-value" id="cycleImprovement">—</span>
+          <div class="m-label">Faster release cycles<br>reduction in test cycle time</div>
+        </div>
+        <div class="metric-card">
+          <span class="m-icon">📈</span>
+          <span class="m-value" id="roiPct">—</span>
+          <div class="m-label">Overall ROI<br>vs. AUTOCORE investment</div>
+        </div>
+      </div>
+
+      <div class="pillars-grid">
+        <div class="pillar speed">
+          <div class="p-name">Speed</div>
+          <span class="p-stat" id="speedStat">—</span>
+          <div class="p-desc">faster time-to-release</div>
+          <ul class="pillar-points">
+            <li>Test creation time drops by 70%</li>
+            <li>Release cycles accelerate by 50%</li>
+            <li>Root-cause identification under 2 hrs</li>
+          </ul>
+        </div>
+        <div class="pillar quality">
+          <div class="p-name">Quality</div>
+          <span class="p-stat">60%</span>
+          <div class="p-desc">fewer production defects</div>
+          <ul class="pillar-points">
+            <li>Defect escape rate reduced by 60%</li>
+            <li>Test coverage increases by 80%</li>
+            <li>Every build validated against business intent</li>
+          </ul>
+        </div>
+        <div class="pillar scale">
+          <div class="p-name">Scale</div>
+          <span class="p-stat" id="scaleStat">—</span>
+          <div class="p-desc">more coverage, same headcount</div>
+          <ul class="pillar-points">
+            <li>Web · Mobile · ERP in one platform</li>
+            <li>Scale test volume without linear hiring</li>
+            <li>Regression runs overnight, automatically</li>
+          </ul>
+        </div>
+        <div class="pillar cost">
+          <div class="p-name">Cost</div>
+          <span class="p-stat">80%</span>
+          <div class="p-desc">reduction in maintenance cost</div>
+          <ul class="pillar-points">
+            <li>Manual QA effort reduced by 65%</li>
+            <li>Self-healing eliminates script rework</li>
+            <li>Smaller teams, significantly bigger output</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>© 2026 Technodysis · Privileged and Confidential</span>
+    <span class="disclaimer">Target outcomes based on AUTOCORE platform design. Actual results may vary by implementation. ROI assumes platform cost at 30% of estimated annual savings.</span>
+  </div>
+
+</div>
+
+<script>
+  let currency = 'INR';
+
+  function setCurrency(c) {
+    currency = c;
+    document.getElementById('btnINR').classList.toggle('active', c === 'INR');
+    document.getElementById('btnUSD').classList.toggle('active', c === 'USD');
+    calculate();
+  }
+
+  function getSalaryINR() {
+    const val = document.getElementById('salaryBand').value;
+    if (val.startsWith('usd')) {
+      const usd = parseInt(val.replace('usd', ''));
+      return usd * 84;
+    }
+    return parseInt(val);
+  }
+
+  function formatMoney(inr) {
+    if (currency === 'USD') {
+      const usd = Math.round(inr / 84);
+      if (usd >= 1000000) return '$' + (usd / 1000000).toFixed(1) + 'M';
+      if (usd >= 1000) return '$' + Math.round(usd / 1000) + 'K';
+      return '$' + usd.toLocaleString();
+    } else {
+      if (inr >= 10000000) return '₹' + (inr / 10000000).toFixed(1) + 'Cr';
+      if (inr >= 100000) return '₹' + Math.round(inr / 100000) + 'L';
+      return '₹' + inr.toLocaleString();
+    }
+  }
+
+  function calculate() {
+    const teamSize = parseInt(document.getElementById('teamSize').value);
+    const maintPct = parseInt(document.getElementById('maintPct').value) / 100;
+    const cycleDays = parseInt(document.getElementById('cycleDays').value);
+    const salaryINR = getSalaryINR();
+
+    const totalSalaryINR = teamSize * salaryINR;
+    const maintCostINR = totalSalaryINR * maintPct;
+    const maintSavingINR = Math.round(maintCostINR * 0.80);
+    const manualEffortSavingINR = Math.round(totalSalaryINR * (1 - maintPct) * 0.65);
+    const totalSavingINR = maintSavingINR + manualEffortSavingINR;
+
+    const autocoreCostINR = Math.round(totalSavingINR * 0.30);
+    const netSavingINR = totalSavingINR - autocoreCostINR;
+    const roiPct = Math.round((netSavingINR / autocoreCostINR) * 100);
+
+    const workingHoursPerYear = 2000;
+    const maintHours = teamSize * workingHoursPerYear * maintPct;
+    const hoursReclaimed = Math.round(maintHours * 0.80);
+
+    const cycleReduction = Math.round(cycleDays * 0.70);
+    const speedImprovement = Math.round((cycleReduction / cycleDays) * 100);
+    const scaleMultiple = teamSize >= 20 ? '10x' : teamSize >= 10 ? '7x' : '5x';
+
+    document.getElementById('costSaved').textContent = formatMoney(netSavingINR);
+    document.getElementById('hoursReclaimed').textContent = hoursReclaimed.toLocaleString() + ' hrs';
+    document.getElementById('cycleImprovement').textContent = speedImprovement + '%';
+    document.getElementById('roiPct').textContent = roiPct + '%';
+    document.getElementById('speedStat').textContent = speedImprovement + '%';
+    document.getElementById('scaleStat').textContent = scaleMultiple;
+  }
+
+  ['teamSize','maintPct','cycleDays'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.addEventListener('input', function() {
+      document.getElementById(id + 'Val').textContent = el.value;
+      calculate();
+    });
+  });
+
+  document.getElementById('releaseFreq').addEventListener('change', calculate);
+  document.getElementById('salaryBand').addEventListener('change', calculate);
+
+  calculate();
+</script>
+
+</body>
+</html>
